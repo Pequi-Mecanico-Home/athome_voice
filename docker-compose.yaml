@@ -1,0 +1,30 @@
+version: '2.3'
+
+networks:
+  ros:
+    driver: bridge
+
+services:
+  ros-master:
+    image: ros:melodic-ros-core
+    command: stdbuf -o L roscore
+    networks:
+      - ros
+    restart: always
+
+  voice:
+    image: voice-ros
+    build: 
+      context: ./voice/
+      dockerfile: Dockerfile
+    volumes: 
+      - /home/:/home/
+    depends_on:
+      - ros-master
+    environment:
+      - "ROS_MASTER_URI=http://ros-master:11311"
+    command: tail -f /dev/null #roslauch chatbot chatbot.launch
+    networks:
+      - ros
+    restart: always
+    privileged: true

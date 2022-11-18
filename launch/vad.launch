@@ -1,0 +1,4 @@
+<launch>
+    <node name="speech_to_text_vad" pkg="voice" type="ros_vad.py" output="screen" >
+    </node>
+</launch>

@@ -1,0 +1,12 @@
+<launch>
+    <node name="speech_to_text_vad" pkg="voice" type="ros_vad.py" output="screen" >
+    </node>
+    <!-- <node name="speech_to_text_nemo" pkg="voice" type="ros_stt_nemo.py" output="screen" > -->
+    <!-- </node> -->
+    <!-- <node name="speech_to_text_w2v" pkg="voice" type="ros_stt_w2v.py" output="screen" >
+    </node> -->
+    <node name="speech_to_text_whisper" pkg="voice" type="ros_stt_whisper.py" output="screen" >
+    </node>
+    <node name="text_to_speech" pkg="voice" type="ros_tts.py" output="screen" >
+    </node>
+</launch>

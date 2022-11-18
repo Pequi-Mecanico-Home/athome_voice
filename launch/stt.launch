@@ -1,0 +1,4 @@
+<launch>
+    <node name="speech_to_text_whisper" pkg="voice" type="ros_stt_whisper.py" output="screen" >
+    </node>
+</launch>

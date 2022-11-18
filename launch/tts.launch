@@ -1,0 +1,4 @@
+<launch>
+    <node name="text_to_speech_nemo" pkg="voice" type="ros_tts.py" output="screen" >
+    </node>
+</launch>
