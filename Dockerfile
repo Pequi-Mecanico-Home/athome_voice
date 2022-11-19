@@ -64,7 +64,14 @@ RUN pip install numpy --upgrade && \
 RUN apt install ffmpeg -y && \
     git clone https://github.com/openai/whisper && \
     cd whisper && pip install . --no-deps && \
+    python3 -m pip install more-itertools transformers==4.19.0 && \
     python -c "import whisper; whisper.load_model('base'); whisper.load_model('small'); whisper.load_model('tiny')"
+
+# RUN apt -y update && apt -y upgrade && \
+#     apt -y install libsndfile1
+RUN python3 -m pip install git+https://github.com/scikit-learn/scikit-learn.git scipy librosa unidecode inflect && \
+    python3 -c "import torch; torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tacotron2', model_math='fp16'); \
+                torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_waveglow', model_math='fp16')"
 # ===========================================================================================
 
 # various late additions
@@ -82,14 +89,15 @@ RUN python3 -m pip install netifaces num2words spacy==3.4.1 && python3 -m spacy 
 ################################################################
 
 ARG WORKSPACE=/voice_ws
-RUN mkdir -p /${WORKSPACE}/voice
+ARG pkg=/src
+RUN mkdir -p /${WORKSPACE}/${pkg}
 WORKDIR ${WORKSPACE}
 ENV PYTHONPATH="${WORKSPACE}:${PYTHONPATH}"
 
-COPY ./src ${WORKSPACE}/voice/src
-COPY ./launch ${WORKSPACE}/voice/launch
-COPY ./msg ${WORKSPACE}/voice/msg
-COPY ./srv ${WORKSPACE}/voice/srv
+COPY ./src ${WORKSPACE}/${pkg}/src
+COPY ./launch ${WORKSPACE}/${pkg}/launch
+COPY ./msg ${WORKSPACE}/${pkg}/msg
+COPY ./srv ${WORKSPACE}/${pkg}/srv
 
 # ===========================================================================================
 # setup entrypoint
@@ -100,6 +108,6 @@ CMD ["bash"]
 
 RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /root/.bashrc 
 
-COPY ./CMakeLists.txt ${WORKSPACE}/voice/
-COPY ./package.xml ${WORKSPACE}/voice/
-RUN /bin/bash -c '. /opt/ros/$ROS_DISTRO/setup.bash; cd voice ;catkin_make'
+COPY ./CMakeLists.txt ${WORKSPACE}/${pkg}/
+COPY ./package.xml ${WORKSPACE}/${pkg}/
+RUN /bin/bash -c '. /opt/ros/$ROS_DISTRO/setup.bash; catkin_make'

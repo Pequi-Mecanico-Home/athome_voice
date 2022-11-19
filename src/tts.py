@@ -12,21 +12,23 @@ from src.srv import Tts, TtsResponse
 
 
 @abstractclass
-class TTS:
-    pass
-
-class TTSROS:
-    def __init__(self):        
+class TTS:    
+    def __init__(self):
         # create topics
         self.text_subscriber = rospy.Subscriber(String, 'tts_text', self.text_listener, 10)
         self.audio_publisher = rospy.Publisher(Audio, 'tts_audio', 10)
+
+class TacotronROS:
+    def __init__(TTS):    
+        super().__init__(self)
         
-        self.tacotron2 = torch.load("../data/nvidia_tacotron2pyt_fp16.pt")
-        self.tacotron2 = self.tacotron2.to('cuda')
+        self.tacotron2 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tacotron2', model_math='fp16')
+        self.tacotron2 = tacotron2.to('cuda')
         self.tacotron2.eval()
 
-        self.waveglow = torch.load("../data/nvidia_waveglowpyt_fp16_20210323.pt')
-        self.waveglow = self.waveglow.to('cuda')
+        self.waveglow = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_waveglow', model_math='fp16')
+        self.waveglow = waveglow.remove_weightnorm(waveglow)
+        self.waveglow = waveglow.to('cuda')
         self.waveglow.eval()
 
         self.utils = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_tts_utils')
@@ -64,6 +66,7 @@ class TTSROS:
         audio_numpy = audio[0].data.cuda().numpy()
         self.rate = 22050
 
+        # /logs/tts/
         audio_path = f"{datetime.datetime.now()}.wav"
         write(audio_path, self.rate, audio_numpy)
 
@@ -94,12 +97,14 @@ class TTSROS:
         
 
 def main(args=None):
-    tts = TTSROS()
+    tts = TacotronROS()
     
     def handler(req):
         print(req)
         tts(req) 
-        return TtsResponse()
+        return TtsResponse(
+            audio_path=os.path.abspath(audio_name)
+        )
     rospy.init_node('tts')
     service = rospy.Service('voice/tts', Tts, handler)   
     
