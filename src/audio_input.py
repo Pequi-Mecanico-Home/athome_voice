@@ -88,5 +88,6 @@ class AudioInput:
         self.audio_publisher.publish(msg)
         
 if __name__ == "__main__":
-   pass
-   # TODO
+    ai = AudioInput()
+    rospy.init_node('audioin')
+    rospy.spin()
