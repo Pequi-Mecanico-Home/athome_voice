@@ -6,16 +6,16 @@ networks:
 
 services:
   ros-master:
-    image: ros:melodic-ros-core
+    image: ros:noetic-ros-core
     command: stdbuf -o L roscore
     networks:
       - ros
     restart: always
 
   voice:
-    image: voice-ros
+    image: voice-ros-dev:a0.1
     build: 
-      context: ./voice/
+      context: ./
       dockerfile: Dockerfile
     volumes: 
       - /home/:/home/
