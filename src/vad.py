@@ -104,7 +104,7 @@ class VADRecorder:
     def __call__(self, save_audio=True):
         
         prob = self.model(torch.rand((1,16_000), dtype=torch.float32).to("cuda"), 16_000).item()
-        os.system(f'aplay resources/okay2.wav -D hw:2,0')  # TODO: refactor path or use sound_play
+        os.system(f'aplay ./resources/okay2.wav -D hw:2,0')  # TODO: refactor path or use sound_play
         
         print(f"Starting mic streaming on device {self.mic}")
         try:

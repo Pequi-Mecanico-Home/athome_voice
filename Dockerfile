@@ -37,17 +37,6 @@ RUN python3 -m pip install --upgrade pip && \
     python3 -m pip install rospkg
 
 RUN python3 -m pip install pyctcdecode && python3 -m pip install https://github.com/kpu/kenlm/archive/master.zip
-# ===========================================================================================
-# setup entrypoint
-COPY ./ros_entrypoint.sh /
-
-ENV ROS_DISTRO=noetic
-
-ENTRYPOINT ["/ros_entrypoint.sh"]
-CMD ["bash"]
-
-RUN echo "source /opt/ros/noetic/setup.bash" >> /root/.bashrc 
-
 
 ENV TZ=America/Sao_Paulo
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && apt update && apt install -y tzdata
@@ -92,8 +81,25 @@ RUN python3 -m pip install netifaces num2words spacy==3.4.1 && python3 -m spacy 
 ## project install
 ################################################################
 
-RUN mkdir /voice_ws
 ARG WORKSPACE=/voice_ws
+RUN mkdir -p /${WORKSPACE}/voice
+WORKDIR ${WORKSPACE}
 ENV PYTHONPATH="${WORKSPACE}:${PYTHONPATH}"
 
-COPY ./ros/src /voice_ws/src
+COPY ./src ${WORKSPACE}/voice/src
+COPY ./launch ${WORKSPACE}/voice/launch
+COPY ./msg ${WORKSPACE}/voice/msg
+COPY ./srv ${WORKSPACE}/voice/srv
+
+# ===========================================================================================
+# setup entrypoint
+COPY ./ros_entrypoint.sh /
+
+ENTRYPOINT ["/ros_entrypoint.sh"]
+CMD ["bash"]
+
+RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /root/.bashrc 
+
+COPY ./CMakeLists.txt ${WORKSPACE}/voice/
+COPY ./package.xml ${WORKSPACE}/voice/
+RUN /bin/bash -c '. /opt/ros/$ROS_DISTRO/setup.bash; cd voice ;catkin_make'
