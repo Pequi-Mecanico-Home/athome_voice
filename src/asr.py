@@ -19,7 +19,13 @@ from std_msgs.msg import String
 
 
 @abstractclass
-class ASR:
+class ASRROS:
+
+    def __init__(self):
+        # create topics
+        print(f"creating topics")
+        self.audio_subscriber = rospy.Subscriber('audio_in', Audio, self.audio_listener, 10)
+        self.transcript_publisher = rospy.Publisher('transcripts', String, 10)
     
     def transcribe_audio_path(self, audio_path, *kwargs):
         raise NotImplementedError
@@ -30,17 +36,12 @@ class ASR:
     def transcribe_audio(self, audio):
         raise NotImplementedError
 
-class WhisperROS(ASR):
+class WhisperROS(ASRROS):
 
     def __init__(self, model_name="base", sample_rate=16000):
-        super().__init__(self, ASR)    
+        super().__init__(self, ASRROS)    
         
         self.sample_rate = sample_rate
-
-        # create topics
-        print(f"creating topics")
-        self.audio_subscriber = rospy.Subscriber('audio_in', Audio, self.audio_listener, 10)
-        self.transcript_publisher = rospy.Publisher('transcripts', String, 10)
 
         # load the ASR model
         print(f"loading model")        
@@ -110,6 +111,6 @@ if __name__ == "__main__":
             transcription=transcription
         )
     rospy.init_node('whisper_asr')
-    service = rospy.Service('voice/stt/whisper', Asr, handler)   
+    service = rospy.Service('voice/stt', Asr, handler)   
     
     rospy.spin()
