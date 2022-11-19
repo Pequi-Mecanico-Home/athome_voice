@@ -1,0 +1,6 @@
+<launch>
+    <node name="audioin" pkg="voice" type="audio_input.py" output="screen" >
+    </node>
+    <node name="audiout" pkg="voice" type="audio_output.py" output="screen" >
+    </node>
+</launch>

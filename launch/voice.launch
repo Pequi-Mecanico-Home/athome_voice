@@ -1,8 +1,14 @@
 <launch>
+    <node name="wake_word" pkg="wake_word" type="ros_wakeword_srv.py" output="screen" >
+    </node>
     <node name="vad" pkg="voice" type="vad.py" output="screen" >
     </node>
     <node name="stt" pkg="voice" type="stt.py" output="screen" >
     </node>
     <node name="tts" pkg="voice" type="tts.py" output="screen" >
+    </node>
+    <node name="audioin" pkg="voice" type="audio_input.py" output="screen" >
+    </node>
+    <node name="audiout" pkg="voice" type="audio_output.py" output="screen" >
     </node>
 </launch>
