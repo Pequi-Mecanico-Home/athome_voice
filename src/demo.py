@@ -52,7 +52,7 @@ class VoiceDemo:
         self.tts = rospy.ServiceProxy('/tts', Tts)
         self.stt = rospy.ServiceProxy('/stt', Stt)
         self.wake_word = rospy.ServiceProxy('/wake_word', Empty) 
-        self.recognizer = SimpleRecognizer(["What is your name?"])
+        self.recognizer = SimpleRecognizer(["What is your name?", "What is the capital of Brazil?", "How are you?"])
 
     def __call__(self):
         print('Waiting wake word...')
@@ -67,6 +67,12 @@ class VoiceDemo:
         print(result)
         if len(result) > 0:
             self.tts(f"I recognize the command {result[0]}")
+            if result[0] == "What is your name?":
+                self.tts("My name is Miss Piggy")
+            elif result[0] == "What is the capital of Brazil?":
+                self.tts("The capital of Brazil is Brazilia")
+            elif result[0] == "How are you?":
+                self.tts("I am fine, and you?")
         else:
             self.tts("I did not recognize your command")
 
