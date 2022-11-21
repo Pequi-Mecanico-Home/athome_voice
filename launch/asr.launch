@@ -1,0 +1,4 @@
+<launch>
+    <node name="asr" pkg="voice" type="asr.py" output="screen" >
+    </node>
+</launch>

@@ -1,6 +1,4 @@
 <launch>
-    <!-- <node name="wake_word" pkg="wake_word" type="ros_wakeword.py" output="screen" >
-    </node> -->
-    <node name="wake_word" pkg="wake_word" type="ros_wakeword_srv.py" output="screen" >
+    <node name="wake_word" pkg="voice" type="ros_wakeword_srv.py" output="screen" >
     </node>
 </launch>

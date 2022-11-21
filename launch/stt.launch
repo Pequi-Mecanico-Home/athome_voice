@@ -1,4 +1,0 @@
-<launch>
-    <node name="stt" pkg="voice" type="stt.py" output="screen" >
-    </node>
-</launch>
