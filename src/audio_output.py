@@ -10,7 +10,7 @@ from jetson_voice_ros.msg import Audio
 
 
 class AudioOutput:
-    def __init__(self, device_name="24", sample_rate=22050, chunk_size=4000):        
+    def __init__(self, device_name, sample_rate, chunk_size):    # TODO: add default parameters    
         # create topics
         self.audio_subscriber = rospy.Subscriber('audio_out', Audio, self.audio_listener, 10)
         
@@ -49,6 +49,5 @@ class AudioOutput:
             self.wav.write(samples)
 
 if __name__ == "__main__":
-    ap = AudioOutput()
-    rospy.init_node('audiout')
-    rospy.spin()
+   pass
+   # TODO

@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from jetson_voice.utils import AudioInput, audio_to_int16
-from src.msg import Audio
+from voice.msg import Audio
 
 
 class AudioInput:
@@ -88,6 +88,5 @@ class AudioInput:
         self.audio_publisher.publish(msg)
         
 if __name__ == "__main__":
-    ai = AudioInput()
-    rospy.init_node('audioin')
-    rospy.spin()
+   pass
+   # TODO

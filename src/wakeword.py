@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/local/bin/python3.6
 import os
 directory = os.path.dirname(os.path.realpath(__file__))
 
@@ -65,7 +65,7 @@ class WakeWord():
 	def __init__(self):
 		print('Starting... ')
 		#self.engine = Precise('/resources/hey-mycroft-2', self.hotword_detected)
-		self.engine = Snowboy('/resources/computer.umdl', self.hotword_detected)
+		self.engine = Snowboy('/voice_ws/src/voice/src/resources/computer.umdl', self.hotword_detected)
 		self.active = True
 		self.detected = False
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import numpy as np
-from abs import abstractclass
 from multiprocessing import Process
 
 import numpy as np
@@ -15,8 +14,9 @@ from soundfile import SoundFile
 
 from jetson_voice import AudioInput
 from jetson_voice.utils import audio_to_float, audio_to_int16
-from src.msg import Audio, Empty
-from src.srv import Vad, VadResponse
+from voice.msg import Audio
+from std_msgs.msg import Empty
+from voice.srv import Vad, VadResponse
 
 
 class VADRecorder:
@@ -104,7 +104,7 @@ class VADRecorder:
     def __call__(self, save_audio=True):
         
         prob = self.model(torch.rand((1,16_000), dtype=torch.float32).to("cuda"), 16_000).item()
-        os.system(f'aplay ./resources/okay2.wav -D hw:2,0')  # TODO: refactor path or use sound_play
+        os.system(f'aplay resources/okay2.wav -D hw:2,0')  # TODO: refactor path or use sound_play
         
         print(f"Starting mic streaming on device {self.mic}")
         try:

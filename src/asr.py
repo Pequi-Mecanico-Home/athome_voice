@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
 import os
 import datetime
-from abs import abstractclass
+from abc import ABC
 from multiprocessing import Process
 
 import rospy
@@ -13,19 +12,12 @@ import torchaudio
 import whisper
 from soundfile import SoundFile
 
-from src.msg import Audio
-from src.srv import Asr, AsrResponse
+from voice.msg import Audio
+from voice.srv import Asr, AsrResponse
 from std_msgs.msg import String
 
 
-@abstractclass
-class ASRROS:
-
-    def __init__(self):
-        # create topics
-        print(f"creating topics")
-        self.audio_subscriber = rospy.Subscriber('audio_in', Audio, self.audio_listener, 10)
-        self.transcript_publisher = rospy.Publisher('transcripts', String, 10)
+class ASR(ABC):
     
     def transcribe_audio_path(self, audio_path, *kwargs):
         raise NotImplementedError
@@ -36,12 +28,17 @@ class ASRROS:
     def transcribe_audio(self, audio):
         raise NotImplementedError
 
-class WhisperROS(ASRROS):
+class WhisperROS(ASR):
 
     def __init__(self, model_name="base", sample_rate=16000):
-        super().__init__(self, ASRROS)    
+        super().__init__()    
         
         self.sample_rate = sample_rate
+
+        # create topics
+        print(f"creating topics")
+        self.audio_subscriber = rospy.Subscriber('audio_in', Audio, self.audio_listener, 10)
+        self.transcript_publisher = rospy.Publisher('transcripts', String, 10)
 
         # load the ASR model
         print(f"loading model")        
@@ -53,7 +50,7 @@ class WhisperROS(ASRROS):
         mel = whisper.log_mel_spectrogram(torch.empty(torch.Size([480000])).to("cuda"))
         self.asr.decode(mel, self.decoding_options)
         
-        print(f"model '{self.model_name}' ready") 
+        print(f"model '{model_name}' ready") 
 
     def transcribe(audio, decoding_options=None):
         if not decoding_options:
@@ -111,6 +108,6 @@ if __name__ == "__main__":
             transcription=transcription
         )
     rospy.init_node('whisper_asr')
-    service = rospy.Service('voice/stt', Asr, handler)   
+    service = rospy.Service('voice/stt/whisper', Asr, handler)   
     
     rospy.spin()

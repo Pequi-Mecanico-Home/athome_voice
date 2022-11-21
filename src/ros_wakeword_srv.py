@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/local/bin/python3.6
 import os
 directory = os.path.dirname(os.path.realpath(__file__))
 TOP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -53,7 +53,7 @@ class WakeWord:
 
     def __init__(self, 
                  input_device=24,
-                 model="./resources/computer.umdl"):
+                 model="/voice_ws/src/voice/src/resources/computer.umdl"):
                  
         print(f"Creating wakeword")
         self.service = rospy.Service('wake_word', Empty, self) 
