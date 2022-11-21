@@ -84,15 +84,22 @@ RUN apt-get update && \
 
 RUN python3 -m pip install netifaces num2words spacy==3.4.1 && python3 -m spacy download en_core_web_sm
 
+RUN apt update && apt install -y python3-catkin-tools
+
+# For wakeword
+RUN apt install -y software-properties-common && add-apt-repository ppa:deadsnakes/ppa && apt install -y python3.6
 ################################################################
 ## project install
 ################################################################
 
+ARG WORKSPACE=/jetson_voice
+COPY jetson_voice ${WORKSPACE}/jetson_voice
+ENV PYTHONPATH="${WORKSPACE}:${PYTHONPATH}"
+
 ARG WORKSPACE=/voice_ws
-ARG pkg=/src
+ARG pkg=/src/voice
 RUN mkdir -p /${WORKSPACE}/${pkg}
 WORKDIR ${WORKSPACE}
-ENV PYTHONPATH="${WORKSPACE}:${PYTHONPATH}"
 
 COPY ./src ${WORKSPACE}/${pkg}/src
 COPY ./launch ${WORKSPACE}/${pkg}/launch
@@ -110,4 +117,4 @@ RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /root/.bashrc
 
 COPY ./CMakeLists.txt ${WORKSPACE}/${pkg}/
 COPY ./package.xml ${WORKSPACE}/${pkg}/
-RUN /bin/bash -c '. /opt/ros/$ROS_DISTRO/setup.bash; catkin_make'
+RUN /bin/bash -c '. /opt/ros/$ROS_DISTRO/setup.bash; cd ${WORKSPACE}; catkin build'
