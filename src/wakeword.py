@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3.6
 import os
-directory = os.path.dirname(os.path.realpath(__file__))
+DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
 # from precise_runner import PreciseEngine
 from precise import PreciseRunner
@@ -37,14 +37,14 @@ def play_audio(filename: str):
 
 
 def activate_notify():
-    audio = directory+'/resources/okay2.wav'
+    audio = DIRECTORY+'/resources/okay2.wav'
     #audio = abspath(dirname(abspath(__file__)) + '/../' + audio)
 
     play_audio(audio)
 
 class Precise():
 	def __init__(self, model: str, callback):
-		engine = PreciseEngine(directory+'/resources/precise-engine', directory+model)
+		engine = PreciseEngine(DIRECTORY+'/resources/precise-engine', DIRECTORY+model)
 		self.runner = PreciseRunner(engine, on_activation=callback)
 
 	def start(self):
@@ -52,7 +52,7 @@ class Precise():
 
 class Snowboy():
 	def __init__(self, model: str, callback):
-		self.detector = snowboydecoder.HotwordDetector(directory+model, sensitivity=0.6)
+		self.detector = snowboydecoder.HotwordDetector(DIRECTORY+model, sensitivity=0.6)
 		self.callback = callback
 
 	def start(self):
