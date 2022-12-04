@@ -1,5 +1,9 @@
+#!/usr/bin/env python3
 import os
-import datetime
+DIRECTORY = os.path.dirname(os.path.realpath(__file__))
+
+import time
+from datetime import datetime
 from abc import ABC
 from multiprocessing import Process
 
@@ -30,15 +34,16 @@ class ASR(ABC):
 
 class WhisperROS(ASR):
 
-    def __init__(self, model_name="base", sample_rate=16000):
+    def __init__(self, model_name="base", sample_rate=16000, save_dir="/logs"):
         super().__init__()    
         
+        self.save_dir = save_dir
         self.sample_rate = sample_rate
 
         # create topics
         print(f"creating topics")
-        self.audio_subscriber = rospy.Subscriber('audio_in', Audio, self.audio_listener, 10)
-        self.transcript_publisher = rospy.Publisher('transcripts', String, 10)
+        self.audio_subscriber = rospy.Subscriber('audio_in', Audio, self.audio_listener, queue_size=10)
+        self.transcript_publisher = rospy.Publisher('transcripts', String, queue_size=10)
 
         # load the ASR model
         print(f"loading model")        
@@ -52,8 +57,8 @@ class WhisperROS(ASR):
         
         print(f"model '{model_name}' ready") 
 
-    def transcribe(audio, decoding_options=None):
-        if not decoding_options:
+    def transcribe(self, audio, decoding_options=None):
+        if decoding_options is None:
             decoding_options = self.decoding_options
 
         audio = whisper.pad_or_trim(audio.flatten())
@@ -61,9 +66,11 @@ class WhisperROS(ASR):
         
         st = time.time()
         mel = whisper.log_mel_spectrogram(audio)
-        result = self.stt.decode(mel, decoding_options)
-        with open(f'asr.log', 'a') as txt:
-            txt.write(f'{datetime.datetime.now()}:{self.__class__.__name__}: {result.text}')
+        result = self.asr.decode(mel, decoding_options)
+
+        now_str = datetime.now().strftime("%m_%d_%Y-%H_%M_%S")
+        with open(os.path.join(self.save_dir, f'asr-{now_str}.txt'), 'w') as txt:
+            print(result.text, file=txt)
         print(f"{result}")
         end = time.time()
         print(f"\ttook {end-st} seconds")
@@ -82,15 +89,13 @@ class WhisperROS(ASR):
         samples = np.frombuffer(msg.data, dtype=msg.info.sample_format)
         print(f'received audio samples {samples.shape} dtype={samples.dtype}') # rms={np.sqrt(np.mean(samples**2))}')
         
-        self.transcribe(samples)
+        self.transcribe(audio=samples)
 
     def transcribe_audio_path(self, audio_path, *kwargs):
         print(f"Starting transcribing audio {audio_path}")
         try:
             audio = whisper.load_audio(file=audio_path, sr=self.sample_rate)
-            transcription = self.transcribe(samples)
-            with open(f'{audio_path}.txt', 'a') as txt:
-                txt.write(f'{datetime.datetime.now()}:{self.__class__.__name__}: {transcription}')
+            transcription = self.transcribe(audio)
         except Exception as e:
             print(f"Trascribing {audio_path}: {str(e)}")
             raise e
@@ -108,6 +113,9 @@ if __name__ == "__main__":
             transcription=transcription
         )
     rospy.init_node('whisper_asr')
-    service = rospy.Service('voice/stt/whisper', Asr, handler)   
+    service = rospy.Service('voice/asr', Asr, handler)   
     
     rospy.spin()
+
+# source devel/setup.bash && roslaunch voice asr.launch &
+# rosservice call voice/asr
