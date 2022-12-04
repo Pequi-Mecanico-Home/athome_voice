@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 import os
+DIRECTORY = os.path.dirname(os.path.realpath(__file__))
+
 import numpy as np
+from datetime import datetime
 from multiprocessing import Process
 
+import time
 import numpy as np
 import pyloudnorm as pyln
 import rospy
@@ -25,10 +29,11 @@ class VADRecorder:
                  max_samples=16_000*6,
                  sample_rate=16_000, 
                  normalize=True,
-                 mic=24,
+                 mic=0,  # ToDo: pass as argument
                  target_norm_lufs=-12.0,
                  warmup=5,
                  audio_prefix='',
+                 save_dir="/logs",
                  chunk_size=4_000,
                  background_detection_patience=(16_000*4)//4_000):    
         
@@ -40,7 +45,10 @@ class VADRecorder:
         self.normalize = normalize
         self.max_samples = max_samples
         self.background_detection_patience = background_detection_patience
-        self.target_norm_lufs = target_norm_lufs 
+        self.target_norm_lufs = target_norm_lufs
+        self.save_dir = save_dir
+        if self.save_dir is not None:
+            os.makedirs(self.save_dir, exist_ok=True)
 
         # create model
         print(f"Creating VAD model")
@@ -67,8 +75,8 @@ class VADRecorder:
 
         # create topics
         print(f"creating topics")
-        self.audio_publisher = rospy.Publisher('audio_in', Audio, 10)
-        self.record_subscriber = rospy.Subscriber('vad_start', Empty, 10)
+        self.audio_publisher = rospy.Publisher('audio_in', Audio, queue_size=10)
+        self.record_subscriber = rospy.Subscriber('vad_start', Empty, queue_size=10)
 
     def int2float(sound):
         abs_max = np.abs(sound).max()
@@ -77,6 +85,14 @@ class VADRecorder:
             sound *= 1/abs_max
         sound = sound.squeeze()  # depends on the use case
         return sound
+
+    def audio_to_int16(samples):
+        if samples.dtype == np.int16:
+            return samples
+        elif samples.dtype == np.float32:
+            return (samples * 32768).astype(np.int16)
+        else:
+            return samples.astype(np.int16)
 
     def publish_audio(self, samples):
         if samples.dtype == np.float32:  # convert to int16 to make the message smaller
@@ -89,9 +105,9 @@ class VADRecorder:
         
         # publish message
         msg = Audio()
-        
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = self.device_name
+
+        msg.header.stamp = datetime.now().strftime("%m_%d_%Y-%H_%M_%S")
+        msg.header.frame_id = f"Mic/device ID: {self.mic}"
 
         msg.info.channels = 1  # AudioInput is set to mono
         msg.info.sample_rate = self.sample_rate
@@ -100,9 +116,9 @@ class VADRecorder:
         msg.data = samples.tobytes()
         
         self.audio_publisher.publish(msg)
+        print("publish audio: Ok")
 
-    def __call__(self, save_audio=True):
-        
+    def vad_record(self, save_audio=True):
         prob = self.model(torch.rand((1,16_000), dtype=torch.float32).to("cuda"), 16_000).item()
         os.system(f'aplay resources/okay2.wav -D hw:2,0')  # TODO: refactor path or use sound_play
         
@@ -156,17 +172,19 @@ class VADRecorder:
         print('\naudio stream closed.')
 
         audio_name = self.prefix+current_time+".wav"
-        output_wav = SoundFile(audio_name, mode='w', samplerate=16_000, channels=1)
+        audio_path = os.path.join(self.save_dir, audio_name)
+        output_wav = SoundFile(audio_path, mode='w', samplerate=16_000, channels=1)
         output_wav.write(final_samples)
 
-        final_samples = np.array(final_samples)
+        audio = final_samples = np.array(final_samples)
         
         print('Audio shape:', final_samples.shape)
 
         if self.normalize:
-            audio_name = self.prefix+current_time+".norm.wav"
+            data, rate = sf.read(audio_path) # load audio
 
-            data, rate = sf.read(current_time+".wav") # load audio
+            audio_name = self.prefix+current_time+".norm.wav"
+            audio_path = os.path.join(self.save_dir, audio_name)
             # peak normalize audio to -1 dB
             peak_normalized_audio = pyln.normalize.peak(data, -1.0)
 
@@ -175,18 +193,21 @@ class VADRecorder:
             loudness = meter.integrated_loudness(data)
 
             # loudness normalize audio to -12 dB LUFS
-            loudness_normalized_audio = pyln.normalize.loudness(data, loudness, self.target_norm_lufs)
+            audio = loudness_normalized_audio = pyln.normalize.loudness(data, loudness, self.target_norm_lufs)
 
-            output_wav_norm = SoundFile(audio_name, mode='w', samplerate=16_000, channels=1)
-            output_wav_norm.write(loudness_normalized_audio)
+            output_wav_norm = SoundFile(audio_path, mode='w', samplerate=16_000, channels=1)
+            output_wav_norm.write(audio)
 
         os.system(f'aplay resources/activate.wav -D hw:2,0')  #TODO: use ros library
                     
-        print(f"Saving audio {os.path.abspath(audio_name)}")
+        print(f"Saving audio {os.path.abspath(audio_path)}")
         
-        self.publish_audio(audio)
+        self.publish_audio(VADRecorder.audio_to_int16(audio))
         
-        return audio_name
+        return audio_path
+
+    def __call__(self, save_audio=True):
+        return self.vad_record(save_audio=save_audio)
 
 class VADRecorderService(VADRecorder):
 
@@ -197,7 +218,7 @@ class VADRecorderService(VADRecorder):
         self.service = rospy.Service(name, Vad, self)
 
     def __call__(self, req=None):
-        audio_name = super(save_audio=True)
+        audio_name = self.vad_record(save_audio=True)
         return VadResponse(
             audio_path=os.path.abspath(audio_name)
         )
@@ -205,4 +226,8 @@ class VADRecorderService(VADRecorder):
 if __name__ == "__main__":
     rospy.init_node('vad')
     vad_recorder_service = VADRecorderService()
+    print('ready')
     rospy.spin()
+
+# source devel/setup.bash && roslaunch voice vad.launch &
+# rosservice call voice/vad
