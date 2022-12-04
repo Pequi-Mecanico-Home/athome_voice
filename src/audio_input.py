@@ -18,7 +18,7 @@ class AudioInput:
         self.resets = resets
         
         # create topics
-        self.audio_publisher = rospy.Publisher('audio_in', Audio, 10)
+        self.audio_publisher = rospy.Publisher('audio_in', Audio, queue_size=10)
         
         self.reset_count = 0
         
