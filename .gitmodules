@@ -1,0 +1,3 @@
+[submodule "jetson-voice"]
+	path = jetson-voice
+	url = https://github.com/lucasgris/jetson-voice.git
