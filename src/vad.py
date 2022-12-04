@@ -29,10 +29,10 @@ class VADRecorder:
                  max_samples=16_000*6,
                  sample_rate=16_000, 
                  normalize=True,
-                 mic=0,  # ToDo: pass as argument
+                 mic=0,  # TODO: pass as argument
                  target_norm_lufs=-12.0,
                  warmup=5,
-                 audio_prefix='',
+                 audio_prefix='vad-',
                  save_dir="/logs",
                  chunk_size=4_000,
                  background_detection_patience=(16_000*4)//4_000):    
@@ -120,7 +120,7 @@ class VADRecorder:
 
     def vad_record(self, save_audio=True):
         prob = self.model(torch.rand((1,16_000), dtype=torch.float32).to("cuda"), 16_000).item()
-        os.system(f'aplay resources/okay2.wav -D hw:2,0')  # TODO: refactor path or use sound_play
+        os.system(f'aplay {DIRECTORY}/resources/okay2.wav -D hw:2,0')  # TODO: refactor path or use sound_play
         
         print(f"Starting mic streaming on device {self.mic}")
         try:
@@ -132,7 +132,7 @@ class VADRecorder:
             return None
 
         t = time.localtime()
-        current_time = time.strftime("%H_%M_%S", t)
+        current_time = datetime.now().strftime("%m_%d_%Y-%H_%M_%S")
 
         background_detection_patience = self.background_detection_patience
 
@@ -198,9 +198,9 @@ class VADRecorder:
             output_wav_norm = SoundFile(audio_path, mode='w', samplerate=16_000, channels=1)
             output_wav_norm.write(audio)
 
-        os.system(f'aplay resources/activate.wav -D hw:2,0')  #TODO: use ros library
+        os.system(f'aplay {DIRECTORY}/resources/activate.wav -D hw:2,0')  #TODO: use ros library
                     
-        print(f"Saving audio {os.path.abspath(audio_path)}")
+        print(f"Saving audio {audio_path}")
         
         self.publish_audio(VADRecorder.audio_to_int16(audio))
         
