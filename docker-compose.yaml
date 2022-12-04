@@ -10,7 +10,7 @@ services:
     command: stdbuf -o L roscore
     networks:
       - ros
-    restart: always
+    # restart: always
 
   voice:
     image: voice-ros-dev:a0.1
@@ -18,7 +18,7 @@ services:
       context: ./
       dockerfile: Dockerfile
     volumes: 
-      - /home/:/home/
+      - ./logs:/logs
     depends_on:
       - ros-master
     environment:
@@ -26,5 +26,5 @@ services:
     command: tail -f /dev/null #roslauch chatbot chatbot.launch
     networks:
       - ros
-    restart: always
+    # restart: always
     privileged: true
