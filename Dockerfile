@@ -93,7 +93,7 @@ RUN apt install -y software-properties-common && add-apt-repository ppa:deadsnak
 ################################################################
 
 ARG WORKSPACE=/jetson_voice
-COPY jetson_voice ${WORKSPACE}/jetson_voice
+COPY jetson-voice/jetson_voice ${WORKSPACE}
 ENV PYTHONPATH="${WORKSPACE}:${PYTHONPATH}"
 
 ARG WORKSPACE=/voice_ws
