@@ -87,7 +87,14 @@ RUN python3 -m pip install netifaces num2words spacy==3.4.1 && python3 -m spacy 
 RUN apt update && apt install -y python3-catkin-tools
 
 # For wakeword
-RUN apt install -y software-properties-common && add-apt-repository ppa:deadsnakes/ppa && apt install -y python3.6
+WORKDIR /root 
+RUN apt install -y software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt install -y python3.6 libpython3.6-dev python3.6-venv
+RUN python3.6 -m venv /root/py36 && \
+    /root/py36/bin/python3.6 -m pip install numpy && \
+    /root/py36/bin/python3.6 -m pip install pip --upgrade && \
+    /root/py36/bin/python3.6 -m pip install pyyaml rospkg pyaudio soundfile
 ################################################################
 ## project install
 ################################################################
