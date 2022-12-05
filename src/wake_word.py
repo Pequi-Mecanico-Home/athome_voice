@@ -1,7 +1,6 @@
-#!/usr/local/bin/python3.6
+#!/root/py3.6/python3.6
 import os
-directory = os.path.dirname(os.path.realpath(__file__))
-TOP_DIR = os.path.dirname(os.path.abspath(__file__))
+DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
 import sys
 import time
@@ -37,7 +36,8 @@ def play_audio(filename: str):
     Popen([player, '-q', filename])
 
 def activate_notify():
-    os.system(f'aplay {TOP_DIR}/resources/okay2.wav -D hw:2,0')
+    os.system(f'aplay {DIRECTORY}/resources/okay2.wav -D hw:2,0')
+    print("You can activate now")
 
 interrupted = False
 
@@ -52,13 +52,13 @@ def interrupt_callback():
 class WakeWord:
 
     def __init__(self, 
-                 input_device=24,
+                 input_device=0,
                  model="/voice_ws/src/voice/src/resources/computer.umdl"):
                  
         print(f"Creating wakeword")
-        self.service = rospy.Service('wake_word', Empty, self) 
+        self.service = rospy.Service('voice/wake_word', Empty, self) 
         
-        self.detector = snowboydecoder.HotwordDetector(model, sensitivity=0.8)
+        self.detector = snowboydecoder.HotwordDetector(model, sensitivity=0.9)
 
         activate_notify()
 
