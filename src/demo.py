@@ -40,18 +40,19 @@ class VoiceDemo:
     
     def __init__(self):
         rospy.init_node("voicedemo")
-        print("wait_for_service('/wake_word')")
-        rospy.wait_for_service('/wake_word')
-        print("wait_for_service('/vad')")
-        rospy.wait_for_service('/vad')
-        print("wait_for_service('/tts')")
-        rospy.wait_for_service('/tts')
-        rospy.wait_for_service('/stt')	
+        print("wait_for_service('voice/wake_word')")
+        rospy.wait_for_service('voice/wake_word')
+        print("wait_for_service('voice/vad')")
+        rospy.wait_for_service('voice/vad')
+        print("wait_for_service('voice/tts')")
+        rospy.wait_for_service('voice/tts')
+        print("wait_for_service('voice/stt')")
+        rospy.wait_for_service('voice/stt')	
 
-        self.vad = rospy.ServiceProxy('/vad', Vad)
-        self.tts = rospy.ServiceProxy('/tts', Tts)
-        self.stt = rospy.ServiceProxy('/stt', Stt)
-        self.wake_word = rospy.ServiceProxy('/wake_word', Empty) 
+        self.vad = rospy.ServiceProxy('voice/vad', Vad)
+        self.tts = rospy.ServiceProxy('voice/tts', Tts)
+        self.stt = rospy.ServiceProxy('voice/stt', Stt)
+        self.wake_word = rospy.ServiceProxy('voice/wake_word', Empty) 
         self.recognizer = SimpleRecognizer(["What is your name?", "What is the capital of Brazil?", "How are you?"])
 
     def __call__(self):
