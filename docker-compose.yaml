@@ -13,7 +13,7 @@ services:
     # restart: always
 
   voice:
-    image: voice-ros-dev:a0.1
+    image: lucasgris/pmec-athome-voice:b0.2 
     build: 
       context: ./
       dockerfile: Dockerfile

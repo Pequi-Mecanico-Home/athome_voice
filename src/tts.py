@@ -96,14 +96,14 @@ class TacotronROS(TTSROS):
 
         print(f"Elapsed time: {end_time - start_time}")
 
-    def generate(self, text, auto_play=True):        
+    def generate(self, text, audio_dir=None, auto_play=True):        
         if len(text) == 0:
             print("Msg is empty!")
             return
             
         print(f"Generating '{text}'")
         if text in self.preloaded_audios:
-            audio, audio_path = self.preloaded_audios[text]
+            audio_numpy, audio_path = self.preloaded_audios[text]
         else:
             sequences, lengths = self.utils.prepare_input_sequence([text])
             start_time = time.time() 
@@ -113,29 +113,30 @@ class TacotronROS(TTSROS):
                 audio = self.waveglow.infer(mel)
             audio_numpy = audio[0].data.cpu().numpy()
 
-            # Ideally, another node should be responsible to play the audio
-            if auto_play:
-                try:
-                    audio_device = AudioOutput(self.output_device, self.tts_rate) 
-                    audio_device.write(audio_numpy)
-                except Exception as e:
-                    print(f"[ERROR] creating audio device with id={self.output_device} and rate={self.tts_rate}: {str(e)}")
-
             now_str = datetime.now().strftime("%m_%d_%Y-%H_%M_%S")
             input_text_save = text.strip().replace(' ', '_')
-            audio_path = os.path.join(self.save_dir, f"{self.audio_prefix}{now_str}-{input_text_save}.wav")
+            audio_path = os.path.join(self.save_dir if audio_dir is None else audio_dir, 
+                                      f"{self.audio_prefix}{now_str}-{input_text_save}.wav")
             save_wav(audio_path, self.tts_rate, audio_numpy)
             end_time = time.time()
             print(f"Elapsed time: {end_time - start_time}")
 
             if self.cache_audios:
-                self.preloaded_audios[text] = audio, audio_path
+                self.preloaded_audios[text] = audio_numpy, audio_path
         
-        return audio_path
+        # Ideally, another node should be responsible to play the audio
+        if auto_play:
+            try:
+                audio_device = AudioOutput(self.output_device, self.tts_rate) 
+                audio_device.write(audio_numpy)
+            except Exception as e:
+                print(f"[ERROR] creating audio device with id={self.output_device} and rate={self.tts_rate}: {str(e)}")
+                
+        return audio_numpy, audio_path
         
     def text_listener(self, msg):
         text = msg.data.strip()
-        audio_numpy = self.generate(msg, auto_play=False)
+        audio_numpy, _ = self.generate(msg, auto_play=False)
         samples = audio_to_int16(audio_numpy)
         
         # publish message
@@ -151,8 +152,8 @@ class TacotronROS(TTSROS):
         msg.data = samples.tobytes()
         self.audio_publisher.publish(msg)
 
-    def __call__(self, req, auto_play=True):
-        return self.generate(req, auto_play=auto_play)
+    def __call__(self, text, audio_dir=None, auto_play=True):
+        return self.generate(text, audio_dir, auto_play=auto_play)
         
 
 if __name__ == "__main__":
@@ -160,7 +161,7 @@ if __name__ == "__main__":
     
     def handler(req):
         print(req)
-        audio_path = tts(req.text, auto_play=True) 
+        _, audio_path = tts(req.text, req.audio_dir, auto_play=req.auto_play) 
         return TtsResponse(
             audio_path=audio_path
         )

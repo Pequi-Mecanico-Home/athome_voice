@@ -1,3 +1,5 @@
 string text
+string audio_dir
+bool auto_play
 ---
 string audio_path
