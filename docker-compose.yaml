@@ -13,7 +13,7 @@ services:
     # restart: always
 
   voice:
-    image: lucasgris/pmec-athome-voice:b0.2 
+    image: pmec-athome-voice:dev # Update this to the name of your image
     build: 
       context: ./
       dockerfile: Dockerfile
