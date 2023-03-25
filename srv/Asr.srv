@@ -1,3 +1,5 @@
 string audio_path
+string text_dir
 ---
 string transcription
+string text_path

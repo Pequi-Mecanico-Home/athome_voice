@@ -57,7 +57,7 @@ class WhisperROS(ASR):
         
         print(f"model '{model_name}' ready") 
 
-    def transcribe(self, audio, decoding_options=None):
+    def transcribe(self, audio, text_dir=None, decoding_options=None):
         if decoding_options is None:
             decoding_options = self.decoding_options
 
@@ -69,7 +69,8 @@ class WhisperROS(ASR):
         result = self.asr.decode(mel, decoding_options)
 
         now_str = datetime.now().strftime("%m_%d_%Y-%H_%M_%S")
-        with open(os.path.join(self.save_dir, f'asr-{now_str}.txt'), 'w') as txt:
+        text_path = os.path.join(self.save_dir if text_dir is None else text_dir, f'asr-{now_str}.txt')
+        with open(text_path, 'w') as txt:
             print(result.text, file=txt)
         print(f"{result}")
         end = time.time()
@@ -79,7 +80,7 @@ class WhisperROS(ASR):
         msg.data = result.text
         self.transcript_publisher.publish(msg)
 
-        return result.text
+        return result.text, text_path
         
     def audio_listener(self, msg):
         if msg.info.sample_rate != self.sample_rate:
@@ -91,28 +92,29 @@ class WhisperROS(ASR):
         
         self.transcribe(audio=samples)
 
-    def transcribe_audio_path(self, audio_path, *kwargs):
+    def transcribe_audio_path(self, audio_path, text_dir=None, *kwargs):
         print(f"Starting transcribing audio {audio_path}")
         try:
             audio = whisper.load_audio(file=audio_path, sr=self.sample_rate)
-            transcription = self.transcribe(audio)
+            transcription, text_path = self.transcribe(audio, text_dir=text_dir)
         except Exception as e:
             print(f"Trascribing {audio_path}: {str(e)}")
             raise e
             return None
-        return transcription
+        return transcription, text_path
 
 if __name__ == "__main__":
     asr = WhisperROS()
     
     def handler(req):
         print(req)
-        transcription = asr.transcribe_audio_path(req.audio_path)  # TODO: refactor to use audio instead of audio path
+        transcription, text_path = asr.transcribe_audio_path(req.audio_path, req.text_dir)  # TODO: refactor to use audio instead of audio path
         print(transcription)
         return AsrResponse(
-            transcription=transcription
+            transcription=transcription,
+            text_path=text_path
         )
-    rospy.init_node('whisper_asr')
+    rospy.init_node('asr')
     service = rospy.Service('voice/asr', Asr, handler)   
     
     rospy.spin()

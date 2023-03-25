@@ -118,7 +118,7 @@ class VADRecorder:
         self.audio_publisher.publish(msg)
         print("publish audio: Ok")
 
-    def vad_record(self, save_audio=True):
+    def vad_record(self, audio_dir=None, save_audio=True):
         prob = self.model(torch.rand((1,16_000), dtype=torch.float32).to("cuda"), 16_000).item()
         os.system(f'aplay {DIRECTORY}/resources/okay2.wav -D hw:2,0')  # TODO: refactor path or use sound_play
         
@@ -172,7 +172,7 @@ class VADRecorder:
         print('\naudio stream closed.')
 
         audio_name = self.prefix+current_time+".wav"
-        audio_path = os.path.join(self.save_dir, audio_name)
+        audio_path = os.path.join(self.save_dir if audio_dir is None else audio_dir, audio_name)
         output_wav = SoundFile(audio_path, mode='w', samplerate=16_000, channels=1)
         output_wav.write(final_samples)
 
@@ -184,7 +184,7 @@ class VADRecorder:
             data, rate = sf.read(audio_path) # load audio
 
             audio_name = self.prefix+current_time+".norm.wav"
-            audio_path = os.path.join(self.save_dir, audio_name)
+            audio_path = os.path.join(self.save_dir if audio_dir is None else audio_dir, audio_name)
             # peak normalize audio to -1 dB
             peak_normalized_audio = pyln.normalize.peak(data, -1.0)
 
@@ -202,7 +202,7 @@ class VADRecorder:
                     
         print(f"Saving audio {audio_path}")
         
-        self.publish_audio(VADRecorder.audio_to_int16(audio))
+        # self.publish_audio(VADRecorder.audio_to_int16(audio))  # TODO fix bug here
         
         return audio_path
 
@@ -217,10 +217,10 @@ class VADRecorderService(VADRecorder):
         print(f"creating service {name}")
         self.service = rospy.Service(name, Vad, self)
 
-    def __call__(self, req=None):
-        audio_name = self.vad_record(save_audio=True)
+    def __call__(self, req):
+        audio_path = self.vad_record(audio_dir=req.audio_dir, save_audio=True)
         return VadResponse(
-            audio_path=os.path.abspath(audio_name)
+            audio_path=audio_path
         )
 
 if __name__ == "__main__":
