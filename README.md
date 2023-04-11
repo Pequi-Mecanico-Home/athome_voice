@@ -25,6 +25,6 @@ docker exec -it <name of the container> bash
 Then, inside the container:
 
 ```sh
-source devel/setup.bash && roslaunch voice tts.launch &
+source devel/setup.bash && roslaunch voice tts.launch &&
 rosservice call voice/tts
 ```
