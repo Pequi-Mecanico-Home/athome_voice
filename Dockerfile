@@ -64,7 +64,8 @@ RUN pip install numpy --upgrade && \
 RUN apt install ffmpeg -y && \
     git clone https://github.com/openai/whisper && \
     cd whisper && pip install . --no-deps && \
-    python3 -m pip install more-itertools transformers==4.19.0 && \
+    python3 -m pip install more-itertools transformers==4.19.0 tiktoken && \
+    python3 -m pip install --upgrade numba &&\
     python -c "import whisper; whisper.load_model('base'); whisper.load_model('small'); whisper.load_model('tiny')"
 
 # RUN apt -y update && apt -y upgrade && \
